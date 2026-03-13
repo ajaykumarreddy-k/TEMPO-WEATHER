@@ -22,7 +22,7 @@ body {
   transition: background-color 0.8s ease;
 }
 
-body.weather-sunny {
+.weather-sunny {
   background-image: 
     linear-gradient(45deg, rgba(255, 204, 51, 0.03) 25%, transparent 25%), 
     linear-gradient(-45deg, rgba(255, 204, 51, 0.03) 25%, transparent 25%), 
@@ -32,21 +32,21 @@ body.weather-sunny {
   background-position: 0 0, 0 20px, 20px -20px, -20px 0px;
 }
 
-body.weather-rainy {
+.weather-rainy {
   background-image: 
     linear-gradient(180deg, rgba(0, 243, 255, 0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 243, 255, 0.04) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
-body.weather-stormy {
+.weather-stormy {
   background-image: 
     linear-gradient(180deg, rgba(255, 77, 0, 0.04) 2px, transparent 2px),
     linear-gradient(90deg, rgba(255, 77, 0, 0.04) 2px, transparent 2px);
   background-size: 64px 64px;
 }
 
-body.weather-snowy {
+.weather-snowy {
   background-image: 
     radial-gradient(rgba(255, 255, 255, 0.08) 2px, transparent 2px);
   background-size: 32px 32px;
@@ -99,8 +99,8 @@ body.weather-snowy {
 }
 
 .inv-slot {
-  width: 64px;
-  height: 64px;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   background: #8b8b8b;
   border: 4px solid #373737;
   box-shadow: inset 4px 4px 0px #dbdbdb, inset -4px -4px 0px #555;

@@ -26,7 +26,7 @@ export interface WeatherApiResponse {
   time: string;
 }
 
-const WEATHER_DATABASE: Record<WeatherState, WeatherData> = {
+export const WEATHER_DATABASE: Record<WeatherState, WeatherData> = {
   sunny: {
     desc: "The sun is shining brightly over the plains biome.",
     temp: 24,
@@ -97,7 +97,7 @@ const WEATHER_DATABASE: Record<WeatherState, WeatherData> = {
   }
 };
 
-const BIOME_COORDS: Record<Biome, { x: number, y: number, z: number }> = {
+export const BIOME_COORDS: Record<Biome, { x: number, y: number, z: number }> = {
   plains: { x: 124, y: 64, z: -512 },
   desert: { x: 2048, y: 70, z: 1024 },
   taiga: { x: -1500, y: 85, z: -2000 },

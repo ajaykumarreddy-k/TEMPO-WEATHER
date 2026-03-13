@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { weatherApi, WeatherState, Biome, WeatherData } from './services/weatherApi';
+import { weatherApi, WeatherState, Biome, WeatherData, WEATHER_DATABASE, BIOME_COORDS } from './services/weatherApi';
 
 const BIOMES: Record<Biome, { name: string, color: string }> = {
   plains: { name: 'Plains', color: 'text-emerald-green' },
@@ -84,7 +84,7 @@ const WeatherIcon = ({ weather }: { weather: WeatherState }) => {
     const isStormy = weather === 'stormy';
     const isSnowy = weather === 'snowy';
     return (
-      <div className="relative w-full h-full flex items-center justify-center mt-8">
+      <div className="relative w-full h-full flex items-center justify-center">
         {/* Cloud Base */}
         <div className={`absolute w-32 h-16 ${isSnowy ? 'bg-white border-gray-200' : isStormy ? 'bg-gray-800 border-gray-900' : 'bg-gray-400 border-gray-500'} border-4 z-20`}></div>
         <div className={`absolute w-20 h-20 ${isSnowy ? 'bg-white border-gray-200' : isStormy ? 'bg-gray-800 border-gray-900' : 'bg-gray-400 border-gray-500'} border-4 z-10 -mt-16 -ml-8`}></div>
@@ -125,10 +125,10 @@ export default function App() {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   
-  const [currentData, setCurrentData] = useState<WeatherData | null>(null);
-  const [coords, setCoords] = useState({ x: 0, y: 0, z: 0 });
+  const [currentData, setCurrentData] = useState<WeatherData | null>(WEATHER_DATABASE['sunny']);
+  const [coords, setCoords] = useState({ x: BIOME_COORDS['plains'].x, y: BIOME_COORDS['plains'].y, z: BIOME_COORDS['plains'].z });
 
   const locationRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
@@ -146,7 +146,15 @@ export default function App() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const initialRender = useRef(true);
+
   useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+      setIsLoading(false);
+      return;
+    }
+
     const fetchData = async () => {
       setIsLoading(true);
       try {
@@ -172,7 +180,6 @@ export default function App() {
   useEffect(() => {
     if (currentData) {
       document.body.style.backgroundColor = currentData.bgColor;
-      document.body.className = `text-gray-100 min-h-screen p-6 weather-${weather}`;
     }
   }, [weather, currentData]);
 
@@ -214,7 +221,7 @@ export default function App() {
   if (!currentData) return null;
 
   return (
-    <>
+    <div className={`text-gray-100 min-h-screen p-4 sm:p-6 weather-${weather}`}>
       <div className="crt-overlay"></div>
       <div className="lightning-overlay"></div>
       
@@ -267,8 +274,8 @@ export default function App() {
               <h1 className="font-pixel text-xl text-white drop-shadow-[2px_2px_0_#000]">TEMPO<span className="text-diamond-cyan">WEATHER</span></h1>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 bg-black/40 p-2 border-2 border-gray-700">
+          <div className="flex flex-col lg:flex-row items-center gap-4 lg:gap-6 w-full md:w-auto">
+            <div className="flex flex-wrap justify-center items-center gap-2 bg-black/40 p-2 border-2 border-gray-700 w-full sm:w-auto">
               <button 
                 className={`weather-toggle-btn ${weather === 'sunny' ? 'active' : ''}`}
                 onClick={() => { setWeather('sunny'); setActiveSlot(0); }}
@@ -298,15 +305,15 @@ export default function App() {
                 <svg fill="#e0f2fe" height="20" viewBox="0 0 24 24" width="20"><path d="M12 2L10 6H14L12 2ZM12 22L14 18H10L12 22ZM2 12L6 14V10L2 12ZM22 12L18 10V14L22 12ZM6.5 6.5L10 9V5L6.5 6.5ZM17.5 17.5L14 15V19L17.5 17.5ZM17.5 6.5L14 9V5L17.5 6.5ZM6.5 17.5L10 15V19L6.5 17.5Z"></path></svg>
               </button>
             </div>
-            <nav className="flex gap-2 relative">
+            <nav className="flex flex-wrap justify-center gap-2 relative w-full sm:w-auto">
               {/* Search Bar */}
-              <div className="relative hidden md:flex items-center" ref={searchRef}>
+              <div className="relative flex items-center w-full sm:w-auto" ref={searchRef}>
                 <input 
                   type="text" 
                   placeholder="Search locations..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="voxel-panel px-4 py-2 font-pixel text-[10px] bg-[#2a2a2a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-diamond-cyan w-48 h-full"
+                  className="voxel-panel px-4 py-2 font-pixel text-[10px] bg-[#2a2a2a] text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-diamond-cyan w-full sm:w-48 h-full"
                 />
                 <svg className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 
@@ -332,13 +339,13 @@ export default function App() {
                 )}
               </div>
 
-              <button className="voxel-panel px-6 py-2 font-pixel text-[10px] hover:translate-y-[-2px] active:translate-y-[2px] transition-transform">DASHBOARD</button>
+              <button className="voxel-panel px-6 py-2 font-pixel text-[10px] hover:translate-y-[-2px] active:translate-y-[2px] transition-transform hidden sm:block">DASHBOARD</button>
               
               {/* Location Picker */}
-              <div className="relative" ref={locationRef}>
+              <div className="relative w-full sm:w-auto" ref={locationRef}>
                 <button 
                   onClick={() => setIsLocationOpen(!isLocationOpen)}
-                  className="voxel-panel px-6 py-2 font-pixel text-[10px] flex items-center gap-2 transition-colors h-full"
+                  className="voxel-panel px-6 py-2 font-pixel text-[10px] flex items-center justify-between sm:justify-center gap-2 transition-colors h-full w-full sm:w-auto"
                 >
                   <span>📍 {BIOMES[biome].name}</span>
                   <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg" className={`transform transition-transform ${isLocationOpen ? 'rotate-180' : ''}`}>
@@ -347,7 +354,7 @@ export default function App() {
                 </button>
                 
                 {isLocationOpen && (
-                  <div className="absolute top-full mt-2 right-0 w-48 voxel-panel z-50 flex flex-col p-2 gap-1 shadow-2xl bg-[#373737] animate-slide-down">
+                  <div className="absolute top-full mt-2 right-0 w-full sm:w-48 voxel-panel z-50 flex flex-col p-2 gap-1 shadow-2xl bg-[#373737] animate-slide-down">
                     {(Object.entries(BIOMES) as [Biome, {name: string, color: string}][]).map(([key, b]) => (
                       <button
                         key={key}
@@ -361,7 +368,7 @@ export default function App() {
                 )}
               </div>
 
-              <button onClick={() => setIsSettingsOpen(true)} className="voxel-panel px-6 py-2 font-pixel text-[10px] opacity-70 hover:opacity-100">SETTINGS</button>
+              <button onClick={() => setIsSettingsOpen(true)} className="voxel-panel px-6 py-2 font-pixel text-[10px] opacity-70 hover:opacity-100 hidden sm:block">SETTINGS</button>
             </nav>
           </div>
         </header>
@@ -393,9 +400,9 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="relative z-10 flex justify-between items-start">
+              <div className="relative z-10 flex flex-col sm:flex-row justify-between items-start gap-4">
                 <div>
-                  <div className="flex items-center gap-4 mb-2">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-2">
                     <span className={`font-pixel text-sm block ${BIOMES[biome].color}`}>CURRENT BIOME: {BIOMES[biome].name.toUpperCase()}</span>
                     <span className="font-pixel text-[10px] text-gray-500 bg-black/40 px-2 py-1">XYZ: {coords.x} / {coords.y} / {coords.z}</span>
                   </div>
@@ -403,7 +410,7 @@ export default function App() {
                   <p className="font-sans text-xl text-gray-400 mt-2">{currentData.desc}</p>
                 </div>
                 
-                <div className="w-32 h-32 md:w-48 md:h-48 relative transition-transform duration-700">
+                <div className="w-32 h-32 md:w-48 md:h-48 relative transition-transform duration-700 self-center sm:self-auto mt-4 sm:mt-0">
                   <WeatherIcon weather={weather} />
                 </div>
               </div>
@@ -428,11 +435,11 @@ export default function App() {
               </div>
               
               {/* Health and Hunger Bars */}
-              <div className="w-full flex justify-between items-end mt-8 relative z-10 px-2">
+              <div className="w-full flex flex-wrap justify-between items-end gap-2 mt-8 relative z-10 px-2">
                 {/* Health */}
-                <div className="flex gap-[2px]">
+                <div className="flex gap-[1px] sm:gap-[2px]">
                   {Array.from({ length: 10 }).map((_, i) => (
-                    <div key={`health-${i}`} className="w-4 h-4 md:w-5 md:h-5 relative">
+                    <div key={`health-${i}`} className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 relative">
                       <svg viewBox="0 0 9 9" className="w-full h-full drop-shadow-[1px_1px_0_rgba(0,0,0,0.8)]">
                         <path d="M1 2h2v1h1v1h1V3h2V2h1v2h-1v1h-1v1h-1v1H4V6H3V5H2V4H1V2z" fill="#ff0000"/>
                         <path d="M2 2h1v1H2V2zm4 0h1v1H6V2z" fill="#ff7f7f"/>
@@ -441,9 +448,9 @@ export default function App() {
                   ))}
                 </div>
                 {/* Hunger */}
-                <div className="flex gap-[2px]">
+                <div className="flex gap-[1px] sm:gap-[2px]">
                   {Array.from({ length: 10 }).map((_, i) => (
-                    <div key={`hunger-${i}`} className="w-4 h-4 md:w-5 md:h-5 relative">
+                    <div key={`hunger-${i}`} className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 relative">
                       <svg viewBox="0 0 9 9" className="w-full h-full drop-shadow-[1px_1px_0_rgba(0,0,0,0.8)]">
                         <path d="M2 2h2v1H3v1h1v1h1v1H4V5H3V4H2V2z" fill="#8b4513"/>
                         <path d="M5 1h2v1H6v1h1v1h1v1H7V4H6V3H5V1z" fill="#8b4513"/>
@@ -515,16 +522,16 @@ export default function App() {
               <div className="bg-[#c6c6c6] p-4 border-4 border-black shadow-[inset_4px_4px_0_#fff,inset_-4px_-4px_0_#555]">
                 <div className="grid grid-cols-4 gap-2">
                   <div className={`inv-slot ${activeSlot === 0 ? 'active-slot' : ''}`} onClick={() => handleSlotClick(0, 'sunny')} title="Sunny">
-                    <img alt="Sun" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3jCSIgtQx3FW6tkMuPWGRL9y61apA_i7Bf1XEVhY0TUkvP8tL-kYaqezIL-7ApT5y8xncrYbDE1loQv4XMX5vZhEmKGiDspJRUFYsmZv9F6gLOT5d-vNTTwavwNmCo8WZQtaxpPxrKiLy_wHlJPLFD9O7vM88LnfnyLxhtMXQ6CLaAPQb7rWDOqR0_qCdN5DCgoGfAQ21YePFlhM5qcQ_rUYJ1Hykkn2ZOxaMAgx0_P0w62KRufIbZjHLozC7ZCigLVRejYKgE50S" className="w-10 h-10 object-contain drop-shadow-md" />
+                    <img alt="Sun" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD3jCSIgtQx3FW6tkMuPWGRL9y61apA_i7Bf1XEVhY0TUkvP8tL-kYaqezIL-7ApT5y8xncrYbDE1loQv4XMX5vZhEmKGiDspJRUFYsmZv9F6gLOT5d-vNTTwavwNmCo8WZQtaxpPxrKiLy_wHlJPLFD9O7vM88LnfnyLxhtMXQ6CLaAPQb7rWDOqR0_qCdN5DCgoGfAQ21YePFlhM5qcQ_rUYJ1Hykkn2ZOxaMAgx0_P0w62KRufIbZjHLozC7ZCigLVRejYKgE50S" width="40" height="40" className="w-6 h-6 sm:w-10 sm:h-10 object-contain drop-shadow-md" />
                   </div>
                   <div className={`inv-slot ${activeSlot === 1 ? 'active-slot' : ''}`} onClick={() => handleSlotClick(1, 'rainy')} title="Rainy">
-                    <img alt="Rain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZGmH5bnDTU-pJZe0kH6kU7Wzj3QI2IJfggCVGucgIbRlhNIaBezsf3LM9tWKf6SeumVX07nHTlbae1b8YEBQTAwGuvcPxei3OTqQvRXKD0Duy7GS-w_rcJ4VkooL0wbSU8uS5mnwi9PO6qCw8TXWdyd42j98iaem6OfILzcwSwtJJX7XB8n1xosASdEHApJ9jmYetaZ-9xUFQO_oO827vWCdKEyc_8793RnvEl5KQGhe2Vs87YeHYGi2f7qDqSU_QtMglnCjhyA86" className="w-10 h-10 object-contain drop-shadow-md" />
+                    <img alt="Rain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZGmH5bnDTU-pJZe0kH6kU7Wzj3QI2IJfggCVGucgIbRlhNIaBezsf3LM9tWKf6SeumVX07nHTlbae1b8YEBQTAwGuvcPxei3OTqQvRXKD0Duy7GS-w_rcJ4VkooL0wbSU8uS5mnwi9PO6qCw8TXWdyd42j98iaem6OfILzcwSwtJJX7XB8n1xosASdEHApJ9jmYetaZ-9xUFQO_oO827vWCdKEyc_8793RnvEl5KQGhe2Vs87YeHYGi2f7qDqSU_QtMglnCjhyA86" width="40" height="40" className="w-6 h-6 sm:w-10 sm:h-10 object-contain drop-shadow-md" />
                   </div>
                   <div className={`inv-slot ${activeSlot === 2 ? 'active-slot' : ''}`} onClick={() => handleSlotClick(2, 'stormy')} title="Stormy">
-                    <img alt="Thunder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCU_VRrTnP0dagCvZM-97ssxoEg5stpOSvGlBu9GmPThR1nUV8b4rbqhV3iBeGPa4hRkZ2d6gZXSYo3owYCOxuiRzcxz8O24zett6-_aBH7dS0OUmqA5IhZA_vw-fZRrr9BNay3gjCzBWGNWHejKT2DUHgvYwTizFFnfygOtYE9eJ-8wOMltbfdoY8fOvmhk2FE1pT338ej7C3rfaqXg_3VH0hJDP6DCKQz-Ro1Wg6AtUdP3vdpLJW1JgSGUuPfQp3KAHHmz50z-LN2" className="w-10 h-10 object-contain drop-shadow-md" />
+                    <img alt="Thunder" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCU_VRrTnP0dagCvZM-97ssxoEg5stpOSvGlBu9GmPThR1nUV8b4rbqhV3iBeGPa4hRkZ2d6gZXSYo3owYCOxuiRzcxz8O24zett6-_aBH7dS0OUmqA5IhZA_vw-fZRrr9BNay3gjCzBWGNWHejKT2DUHgvYwTizFFnfygOtYE9eJ-8wOMltbfdoY8fOvmhk2FE1pT338ej7C3rfaqXg_3VH0hJDP6DCKQz-Ro1Wg6AtUdP3vdpLJW1JgSGUuPfQp3KAHHmz50z-LN2" width="40" height="40" className="w-6 h-6 sm:w-10 sm:h-10 object-contain drop-shadow-md" />
                   </div>
                   <div className={`inv-slot ${activeSlot === 3 ? 'active-slot' : ''}`} onClick={() => handleSlotClick(3, 'snowy')} title="Snowy">
-                    <img alt="Snow" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgjgB9lxdW_EZYI2ycmdD75mmeH9qt_nqTkeutrgaG049hxh41dP5w2r8rTe3ohgg0nR0rWU4h-OH8QBE_rs6h9zESYd4w4nVv-5HpbT2O_MJlw_yD5RMrD8GoYBjMdQhnfJvAFn_h0n6NY8nAAhNnh2PykWxQy0dADRYw0T6eUkvp9ALvXwArOwg2ea3qlJY0JoHgMFOFEzzJGY4pQc9A93ebXXKMadOr4-ddjthJkLMeAvwm90U48kUUEzL_j9EIwQdxUyRV6OHk" className="w-10 h-10 object-contain drop-shadow-md" />
+                    <img alt="Snow" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgjgB9lxdW_EZYI2ycmdD75mmeH9qt_nqTkeutrgaG049hxh41dP5w2r8rTe3ohgg0nR0rWU4h-OH8QBE_rs6h9zESYd4w4nVv-5HpbT2O_MJlw_yD5RMrD8GoYBjMdQhnfJvAFn_h0n6NY8nAAhNnh2PykWxQy0dADRYw0T6eUkvp9ALvXwArOwg2ea3qlJY0JoHgMFOFEzzJGY4pQc9A93ebXXKMadOr4-ddjthJkLMeAvwm90U48kUUEzL_j9EIwQdxUyRV6OHk" width="40" height="40" className="w-6 h-6 sm:w-10 sm:h-10 object-contain drop-shadow-md" />
                   </div>
                   <div className={`inv-slot ${activeSlot === 4 ? 'active-slot' : ''}`} onClick={() => handleSlotClick(4)}></div>
                   <div className={`inv-slot ${activeSlot === 5 ? 'active-slot' : ''}`} onClick={() => handleSlotClick(5)}></div>
@@ -538,28 +545,28 @@ export default function App() {
           {/* Stats Row */}
           <section className="col-span-12 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             <div className="voxel-panel stat-card-dirt p-5 flex items-center gap-4">
-              <div className="w-12 h-12 bg-orange-900 border-2 border-orange-700 flex items-center justify-center font-pixel text-xl">T</div>
+              <div className="w-12 h-12 bg-orange-900 border-2 border-orange-700 flex items-center justify-center font-pixel text-xl shrink-0">T</div>
               <div>
                 <p className="text-[10px] font-pixel text-gray-500 uppercase">Avg Temp</p>
                 <p className="text-2xl font-bold">{currentData.avgTemp}</p>
               </div>
             </div>
             <div className="voxel-panel stat-card-stone p-5 flex items-center gap-4">
-              <div className="w-12 h-12 bg-gray-700 border-2 border-gray-500 flex items-center justify-center font-pixel text-xl text-diamond-cyan">H</div>
+              <div className="w-12 h-12 bg-gray-700 border-2 border-gray-500 flex items-center justify-center font-pixel text-xl text-diamond-cyan shrink-0">H</div>
               <div>
                 <p className="text-[10px] font-pixel text-gray-500 uppercase">Air Density</p>
                 <p className="text-2xl font-bold">{currentData.airDensity}</p>
               </div>
             </div>
             <div className="voxel-panel stat-card-diamond p-5 flex items-center gap-4">
-              <div className="w-12 h-12 bg-cyan-900 border-2 border-cyan-500 flex items-center justify-center font-pixel text-xl text-diamond-cyan">R</div>
+              <div className="w-12 h-12 bg-cyan-900 border-2 border-cyan-500 flex items-center justify-center font-pixel text-xl text-diamond-cyan shrink-0">R</div>
               <div>
                 <p className="text-[10px] font-pixel text-gray-500 uppercase">Rainfall</p>
                 <p className="text-2xl font-bold">{currentData.rainfall}</p>
               </div>
             </div>
             <div className="voxel-panel stat-card-grass p-5 flex items-center gap-4">
-              <div className="w-12 h-12 bg-green-900 border-2 border-green-700 flex items-center justify-center font-pixel text-xl text-emerald-green">W</div>
+              <div className="w-12 h-12 bg-green-900 border-2 border-green-700 flex items-center justify-center font-pixel text-xl text-emerald-green shrink-0">W</div>
               <div>
                 <p className="text-[10px] font-pixel text-gray-500 uppercase">Wind Spd</p>
                 <p className="text-2xl font-bold">{currentData.windSpd}</p>
@@ -594,7 +601,7 @@ export default function App() {
             </div>
             <div className="voxel-panel p-6 h-80 flex flex-col">
               <h3 className="font-pixel text-sm mb-4">RAINFALL DISTRIBUTION</h3>
-              <div className="flex-grow flex items-end justify-between gap-4 px-4 pb-4">
+              <div className="flex-grow flex items-end justify-between gap-1 sm:gap-2 md:gap-4 px-2 sm:px-4 pb-4">
                 <div className="w-full bg-blue-600 border-2 border-blue-400 shadow-glow-cyan transition-all duration-1000" style={{ height: weather === 'sunny' ? '10%' : weather === 'rainy' ? '60%' : weather === 'snowy' ? '30%' : '80%' }}></div>
                 <div className="w-full bg-blue-600 border-2 border-blue-400 shadow-glow-cyan transition-all duration-1000" style={{ height: weather === 'sunny' ? '20%' : weather === 'rainy' ? '75%' : weather === 'snowy' ? '40%' : '90%' }}></div>
                 <div className="w-full bg-blue-600 border-2 border-blue-400 shadow-glow-cyan transition-all duration-1000" style={{ height: weather === 'sunny' ? '5%' : weather === 'rainy' ? '85%' : weather === 'snowy' ? '50%' : '100%' }}></div>
@@ -611,6 +618,6 @@ export default function App() {
           <p className="font-pixel text-[10px] text-gray-600 tracking-widest">TEMPO-WEATHER OS v1.0.4 - RUNNING ON DEEPSLATE ENGINE</p>
         </footer>
       </div>
-    </>
+    </div>
   );
 }

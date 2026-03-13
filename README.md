@@ -45,4 +45,7 @@ The "Weather Inventory" at the bottom right acts as a control panel for the envi
 *   When a user clicks a search result, the `handleLocationSelect` function is called.
 *   This updates the `biome` state to the selected location, clears the search, and updates the dashboard with the new location's data.
 *   A `mousedown` event listener is attached to the document via a `useEffect` hook. It checks if a click occurred outside the `searchRef` element. If so, it automatically clears the search query, closing the dropdown to keep the UI clean.
+<<<<<<< HEAD
 # HMMMMM 
+=======
+>>>>>>> fe2fb8b (BUG and Latency CLS fix Fast as f**k Boy)
