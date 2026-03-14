@@ -76,3 +76,23 @@ This is the backend service for the TEMPO-WEATHER app, built using Go and the Gi
 ## External Services
 -   Uses [Open-Meteo API](https://open-meteo.com/) for free weather and geocoding data.
 -   Uses [Gin](https://github.com/gin-gonic/gin) for routing.
+
+
+example curl commands for backend
+
+1. Current Weather
+curl "http://localhost:8080/api/weather?lat=13.0827&lon=80.2707"
+
+Using biome:
+
+curl "http://localhost:8080/api/weather?biome=plains"
+2. Hourly Forecast (24 hours)
+curl "http://localhost:8080/api/weather/hourly?lat=13.0827&lon=80.2707"
+3. Daily Forecast (7 days)
+curl "http://localhost:8080/api/weather/daily?lat=13.0827&lon=80.2707"
+4. Historical Weather
+curl "http://localhost:8080/api/weather/historical?lat=13.0827&lon=80.2707&start_date=2025-03-01&end_date=2025-03-07"
+5. Geocoding (City → Coordinates)
+curl "http://localhost:8080/api/geocoding/search?name=Chennai"
+6. Air Quality
+curl "http://localhost:8080/api/air-quality?lat=13.0827&lon=80.2707"
