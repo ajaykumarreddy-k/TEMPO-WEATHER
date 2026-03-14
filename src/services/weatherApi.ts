@@ -1,7 +1,9 @@
+/// <reference types="vite/client" />
 export type WeatherState = 'sunny' | 'rainy' | 'stormy' | 'snowy';
 export type Biome = 'plains' | 'desert' | 'taiga' | 'jungle';
 
 export interface WeatherData {
+  name?: string;
   desc: string;
   temp: number;
   feelsLike: string;
@@ -26,9 +28,121 @@ export interface WeatherApiResponse {
   time: string;
 }
 
+export interface HourlyForecast {
+  time: string[];
+  temperature_2m: number[];
+  relative_humidity_2m: number[];
+  precipitation: number[];
+  wind_speed_10m: number[];
+  cloud_cover: number[];
+  surface_pressure: number[];
+  snowfall: number[];
+  visibility: number[];
+}
+
+export interface DailyForecast {
+  time: string[];
+  temperature_2m_max: number[];
+  temperature_2m_min: number[];
+  sunrise: string[];
+  sunset: string[];
+  precipitation_sum: number[];
+  precipitation_probability_max: number[];
+  wind_speed_10m_max: number[];
+  uv_index_max: number[];
+}
+
+export interface AirQuality {
+  time: string[];
+  pm10: number[];
+  pm2_5: number[];
+  carbon_monoxide: number[];
+  nitrogen_dioxide: number[];
+  ozone: number[];
+  sulphur_dioxide: number[];
+  us_aqi: number[];
+}
+
+export interface HistoricalWeather {
+  time: string[];
+  temperature_2m: number[];
+  relative_humidity_2m: number[];
+  precipitation: number[];
+  wind_speed_10m: number[];
+  cloud_cover: number[];
+  surface_pressure: number[];
+  snowfall: number[];
+  visibility: number[];
+}
+
+export interface GeocodingResult {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  country: string;
+  admin1: string;
+}
+
+const API_BASE_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080/api';
+
+export const weatherApi = {
+  async getWeather(params: { biome?: Biome; lat?: number; lon?: number }): Promise<WeatherApiResponse> {
+    const query = new URLSearchParams();
+    if (params.biome) query.append('biome', params.biome);
+    if (params.lat) query.append('lat', params.lat.toString());
+    if (params.lon) query.append('lon', params.lon.toString());
+    
+    const response = await fetch(`${API_BASE_URL}/weather?${query.toString()}`);
+    if (!response.ok) throw new Error('Failed to fetch weather');
+    return response.json();
+  },
+
+  async getHourly(lat: number, lon: number): Promise<HourlyForecast> {
+    const response = await fetch(`${API_BASE_URL}/weather/hourly?lat=${lat}&lon=${lon}`);
+    if (!response.ok) throw new Error('Failed to fetch hourly forecast');
+    return response.json();
+  },
+
+  async getDaily(lat: number, lon: number): Promise<DailyForecast> {
+    const response = await fetch(`${API_BASE_URL}/weather/daily?lat=${lat}&lon=${lon}`);
+    if (!response.ok) throw new Error('Failed to fetch daily forecast');
+    return response.json();
+  },
+
+  async getAirQuality(lat: number, lon: number): Promise<AirQuality> {
+    const response = await fetch(`${API_BASE_URL}/air-quality?lat=${lat}&lon=${lon}`);
+    if (!response.ok) throw new Error('Failed to fetch air quality');
+    return response.json();
+  },
+
+  async getHistorical(lat: number, lon: number, startDate: string, endDate: string): Promise<HistoricalWeather> {
+    const response = await fetch(`${API_BASE_URL}/weather/historical?lat=${lat}&lon=${lon}&start_date=${startDate}&end_date=${endDate}`);
+    if (!response.ok) throw new Error('Failed to fetch historical weather');
+    return response.json();
+  },
+
+  async searchLocations(name: string): Promise<GeocodingResult[]> {
+    const response = await fetch(`${API_BASE_URL}/geocoding/search?name=${name}`);
+    if (!response.ok) throw new Error('Failed to search locations');
+    const data = await response.json();
+    return data.results || [];
+  },
+
+  async setWeatherOverride(state: WeatherState, biome: Biome, lat?: number, lon?: number): Promise<WeatherApiResponse> {
+    const response = await fetch(`${API_BASE_URL}/weather/override`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state, biome, lat, lon }),
+    });
+    if (!response.ok) throw new Error('Failed to override weather');
+    return response.json();
+  }
+};
+
 export const WEATHER_DATABASE: Record<WeatherState, WeatherData> = {
   sunny: {
-    desc: "The sun is shining brightly over the plains biome.",
+    desc: "The sun is shining brightly.",
     temp: 24,
     feelsLike: "26°C",
     visibility: "16 chunks",
@@ -45,7 +159,7 @@ export const WEATHER_DATABASE: Record<WeatherState, WeatherData> = {
     iconShadow: "0 0 30px rgba(255, 204, 51, 0.6)"
   },
   rainy: {
-    desc: "Heavy rain is falling. Perfect for farming and fishing.",
+    desc: "Heavy rain is falling.",
     temp: 16,
     feelsLike: "14°C",
     visibility: "8 chunks",
@@ -62,7 +176,7 @@ export const WEATHER_DATABASE: Record<WeatherState, WeatherData> = {
     iconShadow: "0 0 20px rgba(0, 243, 255, 0.2)"
   },
   stormy: {
-    desc: "Severe thunderstorm warning! Watch out for creepers.",
+    desc: "Severe thunderstorm warning!",
     temp: 14,
     feelsLike: "10°C",
     visibility: "4 chunks",
@@ -79,7 +193,7 @@ export const WEATHER_DATABASE: Record<WeatherState, WeatherData> = {
     iconShadow: "0 0 30px rgba(255, 77, 0, 0.3)"
   },
   snowy: {
-    desc: "Gentle snow is falling. The taiga is freezing over.",
+    desc: "Gentle snow is falling.",
     temp: -2,
     feelsLike: "-5°C",
     visibility: "6 chunks",
@@ -98,51 +212,8 @@ export const WEATHER_DATABASE: Record<WeatherState, WeatherData> = {
 };
 
 export const BIOME_COORDS: Record<Biome, { x: number, y: number, z: number }> = {
-  plains: { x: 124, y: 64, z: -512 },
-  desert: { x: 2048, y: 70, z: 1024 },
-  taiga: { x: -1500, y: 85, z: -2000 },
-  jungle: { x: 5000, y: 68, z: 5000 }
-};
-
-const BIOME_DEFAULT_WEATHER: Record<Biome, WeatherState> = {
-  plains: 'sunny',
-  desert: 'sunny',
-  taiga: 'snowy',
-  jungle: 'rainy'
-};
-
-export const weatherApi = {
-  /**
-   * Fetches weather data based on the selected biome.
-   * Simulates a network request with a delay.
-   */
-  async getWeatherByBiome(biome: Biome): Promise<WeatherApiResponse> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const state = BIOME_DEFAULT_WEATHER[biome];
-        resolve({
-          state,
-          data: WEATHER_DATABASE[state],
-          coordinates: BIOME_COORDS[biome],
-          time: new Date().toISOString()
-        });
-      }, 600); // 600ms simulated latency
-    });
-  },
-
-  /**
-   * Overrides the current weather state manually.
-   */
-  async setWeatherOverride(state: WeatherState, currentBiome: Biome): Promise<WeatherApiResponse> {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          state,
-          data: WEATHER_DATABASE[state],
-          coordinates: BIOME_COORDS[currentBiome],
-          time: new Date().toISOString()
-        });
-      }, 400); // 400ms simulated latency
-    });
-  }
+  plains: { x: 39.09, y: 64, z: -94.57 },
+  desert: { x: 30.04, y: 70, z: 31.23 },
+  taiga: { x: 62.03, y: 85, z: 129.74 },
+  jungle: { x: -3.11, y: 68, z: -60.02 }
 };
